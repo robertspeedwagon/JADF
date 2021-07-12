@@ -15,7 +15,7 @@ fn main() {
     let path_to_file = Path::new(&program_args[1]);
     let file_extension = path_to_file.extension();
     let assignment_operator = Regex::new(
-        r"[[:space:]]*[a-z|A-Z]*[[:space:]]*<-[[:space:]]*[a-z|A-Z]*[[:space:]]*"
+        r#"[[:space:]]*[[:print:]]*[[:space:]]*<-[[:space:]]*"[[:print:]]*"[[:space:]]*"#
     ).unwrap();
     match file_extension {
         None => {
