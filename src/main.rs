@@ -19,7 +19,8 @@ fn main() {
     ).unwrap();
     match file_extension {
         None => {
-            panic!("no extension for the file; aborting.");
+            eprintln!("no extension for the file; aborting.");
+            process::exit(1);
         },
         Some(os_str) => {
             match os_str.to_str() {
