@@ -1,21 +1,12 @@
 use std::fs;
-//use std::io;
 use std::path::Path;
 use std::env;
 use std::process;
 use regex::Regex;
-//use std::ffi::OsStr;
-
-// enum Type {
-//     TString,
-//     TInteger,
-//     TFloatingPoint,
-// }
 
 struct Field {
     variable_name: String,
     value_string: String,
-    //type_info: Type,
 }
 
 fn main() {
