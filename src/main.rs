@@ -4,8 +4,8 @@ use std::env;
 use std::process;
 use regex::Regex;
 mod jadf;
-use crate::jadf::jadf::Field;
 use crate::jadf::jadf::read;
+
 struct Field {
     variable_name: String,
     value_string: String,

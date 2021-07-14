@@ -1,10 +1,10 @@
-use regex::Regex;
 pub mod jadf {
 	pub struct Field {
 		variable_name: String,
 		value_string: String,
 	}
 	pub mod read {
+		use regex::Regex;
 		pub fn extract_var_name(field_string: &String, rule: &Regex) -> Option<String> {
 		    //if it doesn't find a proper name, or the regex
 		    //doesn't match, the function returns None
