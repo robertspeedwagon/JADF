@@ -1,3 +1,4 @@
+use regex::Regex;
 pub mod jadf {
 	pub struct Field {
 		variable_name: String,
@@ -71,7 +72,7 @@ pub mod jadf {
 		    }
 		    Some(var_value)
 		}
-		fn extract_lines(contents: &String) -> Vec<String> {
+		pub fn extract_lines(contents: &String) -> Vec<String> {
 		    //this function returns a vector of strings, each containing a line of the
 		    //original contents of the file
 		    let mut vector: Vec<String> = Vec::new();

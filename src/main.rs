@@ -49,7 +49,7 @@ fn main() {
 						}
 					};
                    let raw_fields: Vec<String> = read::extract_lines(&file_contents);
-                   let mut fields: Vec<jadf::Field> = Vec::new();
+                   let mut fields: Vec<Field> = Vec::new();
                     for i in 0..raw_fields.len() {
                         let temp_var_name = match read::extract_var_name(&raw_fields[i], &assignment_operator) {
                             Some(s) => s,
