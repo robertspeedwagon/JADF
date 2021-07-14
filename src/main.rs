@@ -3,7 +3,9 @@ use std::path::Path;
 use std::env;
 use std::process;
 use regex::Regex;
-
+mod jadf;
+use crate::jadf::jadf::Field;
+use crate::jadf::jadf::read;
 struct Field {
     variable_name: String,
     value_string: String,
@@ -15,7 +17,7 @@ fn main() {
     let path_to_file = Path::new(&program_args[1]);
     let file_extension = path_to_file.extension();
     let assignment_operator = Regex::new(
-        r#"[[:space:]]*[[:print:]]*[[:space:]]*<-[[:space:]]*"[[:print:]]*"[[:space:]]*"#
+        r#"[[:space:]]*[[:print:]]+[[:space:]]*<-[[:space:]]*"[[:print:]]+"[[:space:]]*"#
     ).unwrap();
     match file_extension {
         None => {
@@ -26,28 +28,40 @@ fn main() {
             match os_str.to_str() {
                 Some("jadf") => { //if the extension of the file is .jadf
                     //the entire program lives here
-                    let file = fs::read_to_string(&path_to_file);
-                    let file = match file {
+                    //opens an existing file for reading and writing:r
+                    let file: Result<fs::File, std::io::Error>  = fs::OpenOptions::new()
+                                    .read(true)
+                                    .write(true)
+                                    .create(false)
+                                    .open(&path_to_file);
+                    let _file = match file {
                         Ok(fl) => fl,
                         Err(_) => {
                             eprintln!("error while reading the file; aborting.");
                             process::exit(1);
                         },
                     };
-                    let raw_fields: Vec<String> = parse_file(&file);
-                    let mut fields: Vec<Field> = Vec::new();
+					let file_contents: String = match fs::read_to_string(&path_to_file) {
+						Ok(s) => s, 
+						Err(_) => {
+							eprintln!("error while reading the file; aborting.");
+							process::exit(1);
+						}
+					};
+                   let raw_fields: Vec<String> = read::extract_lines(&file_contents);
+                   let mut fields: Vec<jadf::Field> = Vec::new();
                     for i in 0..raw_fields.len() {
-                        let temp_var_name = match extract_var_name(&raw_fields[i], &assignment_operator) {
+                        let temp_var_name = match read::extract_var_name(&raw_fields[i], &assignment_operator) {
                             Some(s) => s,
                             None => {
-                                eprintln!("error while parsing the file at line {}:\n\tincorrect syntax; aborting", i);
+                                eprintln!("error while parsing the file at line {}:\n\tincorrect syntax; aborting.", i);
                                 process::exit(1);
                             }
                         };
-                        let temp_var_value = match extract_var_value(&raw_fields[i], &assignment_operator) {
+                        let temp_var_value = match read::extract_var_value(&raw_fields[i], &assignment_operator) {
                             Some(s) => s,
                             None => {
-                                eprintln!("error while parsing the file at line {}:\n\tincorrect syntax; abortng", i);
+                                eprintln!("error while parsing the file at line {}:\n\tincorrect syntax; abortng.", i);
                                 process::exit(1);
                             }
                         };
@@ -70,91 +84,4 @@ fn main() {
             }
         }
     }
-}
-
-fn extract_var_name(field_string: &String, rule: &Regex) -> Option<String> {
-    //if it doesn't find a proper name, or the regex
-    //doesn't match, the function returns None
-    let mut var_name: String = String::new();
-    //it's dirty and i hate it, but idk about any better option
-    let mut index: usize = 0;
-    let mut has_met_chars: bool = false;
-    if rule.is_match(field_string) {
-        //the string contains the rule (regex)
-        //the next variable is meant to be used to later check if the name
-        //contains whitespaces, tabs, and so on. in which case, None is returned
-        for ch in field_string.chars() {
-            //it's not wise to use the .chars() method,
-            //but idk about other options so here we go:
-            if ch == ' ' || ch == '\t' {
-                if has_met_chars == true {
-                    return Some(var_name);
-                } else {
-                    continue;
-                }
-            } else if ch == '<' {
-                //i check if i will eventually find the regex again in the rest
-                //of the string. that is, i check if < is the start of an operator
-                //or if it's part of the name
-                if rule.is_match(&field_string[index..]) {
-                    has_met_chars = true;
-                    var_name.push(ch);
-                } else {
-                    return Some(var_name);
-                }
-            } else {
-                has_met_chars = true;
-                var_name.push(ch);
-            }
-            index += 1;
-        }
-        return Some(var_name)
-    } else {
-        return None
-    }
-}
-
-fn extract_var_value(field_string: &String, rule: &Regex) -> Option<String> {
-    //this is used to check if in the string aaa <- bbb i am in the aaa region
-    //or the bbb region:
-    let mut is_in_dquotes: bool = false;
-    let mut var_value: String = String::new();
-    if rule.is_match(&field_string) {
-        for ch in field_string.chars() {
-            //check for the opening ":
-            if ch == '"' {
-                is_in_dquotes = !is_in_dquotes; //flip the variable
-                continue;
-            }
-            if is_in_dquotes == true {
-                //accumulate until you find another '"':
-                var_value.push(ch);
-            }
-        }
-        if is_in_dquotes == true {
-            //it was not able to find a closing '"':
-            return None;
-        }
-    } else {
-        return None
-    }
-    Some(var_value)
-}
-
-fn parse_file(contents: &String) -> Vec<String> {
-    //this function returns a vector of strings, each containing a line of the
-    //original contents of the file
-    let mut vector: Vec<String> = Vec::new();
-    let mut temp = String::new();
-    for ch in contents.chars() {
-        if ch == '\n' {
-            //push temp into the vector, reset it, and continue reading:
-            vector.push(temp);
-            temp = "".to_string();
-            continue;
-        } else {
-            temp.push(ch);
-        }
-    }
-    vector
 }
